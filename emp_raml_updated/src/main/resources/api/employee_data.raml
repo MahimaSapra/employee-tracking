@@ -1,0 +1,121 @@
+#%RAML 1.0
+title: Employee_Data
+version: v1
+types:
+  employee: !include datatypes/Employees.raml
+  errorResponse: !include datatypes/ErrorResponse.raml
+  successResponse: !include datatypes/SuccessResponse.raml
+  putemployee: !include datatypes/Put_employee.raml
+traits: 
+  employeeSearch: !include traits/trait-collection.raml
+
+/employee:
+  is: [employeeSearch]
+  description: Retrieve all employees
+  get:
+    displayName: Get all Employees
+    description: Retrieve all employees
+    
+    responses:
+      200:
+        body:
+          application/json:
+            type: employee[]
+            example: !include examples/get-all-employees.json
+  post:
+    displayName: Create Employee
+    description: Create a new Employee
+    body:
+      application/json:
+        type: employee[]
+        example: !include examples/postemployee.json
+    responses:
+      200:
+        description: Created
+        body:
+          application/json:
+            type: successResponse
+            example: |
+                {
+                  "status": "OK"
+                }
+            
+      404:
+        description: Server Error
+        body:
+          application/json:
+            type: errorResponse
+            example: |
+                {
+                  "message": "Resource not found"
+                }
+  /{emp_id}:
+    is: [employeeSearch]
+    description:
+       Retrieving specific employee
+    get:
+      displayName: Get employee by id
+      description: Get Employee by ID
+      responses:
+        200:
+          body:
+            application/json:
+              type: employee
+              example: !include examples/getemployeebyid.json
+        404:
+          body:
+            application/json:
+              type: errorResponse
+              example: |
+                {
+                  "message": "Resource not found"
+                }
+    patch:
+      displayName: Update employee by id
+      description: Update Employee specified by ID
+      body:
+        application/json:
+          type: putemployee
+          example: !include examples/put_employee_example.json
+      responses:
+        201:
+          body:
+            application/json:
+              type: successResponse
+              example: |
+                {
+                  "status": "OK"
+                }   
+        404:
+          body:
+            application/json:
+              type: errorResponse
+              example: |
+                {
+                  "message": "Resource not found"
+                }
+    delete:
+      displayName: Delete employee by id
+      description: Delete Employee specified by ID
+      responses:
+        200:
+          body:
+            application/json:
+              type: successResponse
+              example: |
+                {
+                  "status": "OK"
+                }
+        404:
+          body:
+            application/json:
+              type: errorResponse
+              example: |
+                {
+                  "message": "Resource not found"
+                }
+    
+      
+    
+
+            

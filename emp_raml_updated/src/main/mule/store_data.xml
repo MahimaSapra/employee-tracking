@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<flow name="store_dataFlow" doc:id="2c307455-4144-40f8-8627-2826c17d3216" >
+		<http:listener doc:name="Listener" doc:id="71a57b9e-7725-4873-91f7-87b469eae790" config-ref="employee_data-httpListenerConfig" path="/test"/>
+		<salesforce:query-all doc:name="Query all" doc:id="85e20265-b58b-4cef-878b-a25fdcfd3d82" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[select Name,id__C,email__C,age__C,city__C,project__C,manager_name__c from Employee_data__c]]></salesforce:salesforce-query>
+		</salesforce:query-all>
+		<ee:transform doc:name="Transform Message" doc:id="5b21192d-857a-471a-9406-c34482bdd6c6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map (item,index) -> {
+	id: item.id__c default "",
+	name: item.Name default "",
+	email: item.email__c default "",
+	age: item.age__c default 0,
+	city: item.city__c default "",
+	project: item.project__c default "",
+	"manager name": item.manager_name__c default "",
+	
+}
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<validation:is-not-null doc:name="Is not null" doc:id="991e0b2a-96fc-4bc0-afbf-59c8077ed886" config-ref="Validation_Config" value="#[payload]" message='#["Empty payload From Salesforce"]'/>
+		<file:write doc:name="Write_csvfile" doc:id="c1a795db-fff0-44bd-baeb-913bf2ee0475" path="${file.file_name}" mode="APPEND" config-ref="File_Config"/>
+	</flow>
+</mule>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:validation="http://www.mulesoft.org/schema/mule/validation" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="7682705a-1699-452a-b8a8-5534bfb03820" >
+		<salesforce:basic-connection username="${salesforce_creds.uname}" password="${secure::salesforce_creds.pass}" securityToken="${secure::salesforce_creds.sec_token}" url="${salesforce_creds.auth_url}"/>
+	</salesforce:sfdc-config>
+	<validation:config name="Validation_Config" doc:name="Validation Config" doc:id="a4ba198c-7c63-408a-adb9-01dbf4e97883" />
+	<configuration-properties doc:name="Configuration properties" doc:id="3854ff94-f8bc-4ccd-a661-f20f0000f87c" file="properties\dev.yaml" />
+	<file:config name="File_Config" doc:name="File Config" doc:id="02889598-820d-46e6-861b-2a1e84c5b019" >
+		<file:connection workingDir="${app.home}/${file.path}" />
+	</file:config>
+	<secure-properties:config name="Secure_Properties_Config" doc:name="Secure Properties Config" doc:id="ef8fb7bf-ad29-4839-9702-131654613064" file="properties\dev.yaml" key="key@12345678test" />
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="a0fb78c1-4a98-4203-956f-b2e768b93965" >
+		<db:my-sql-connection host="${database.host}" port="${database.port}" user="${database.user}" password="${secure::database.db_pass}" database="${database.database_name}" />
+	</db:config>
+	<email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="39a831d5-b2fa-4086-aa7d-03526f991541" >
+		<email:smtp-connection host="${email.host}" port="${email.port}" user="${email.user}" password="${secure::email.passw}"/>
+	</email:smtp-config>
+</mule>

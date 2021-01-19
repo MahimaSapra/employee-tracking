@@ -1,0 +1,30 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="payload01" format="json">
+      <types:shape format="weave" example="examples/inputpost.json"><![CDATA[%dw 2.0
+
+type payload01 = Array<{|  id: String,   name: String,   email: String,   age: Number {"typeId": "int"},   city: String,   project: String,   "manager name": String|}> {"example": "[{\\\"id\\\":\\\"21011\\\",\\\"name\\\":\\\"ewe\\\",\\\"email\\\":\\\"ewe@apisero.com\\\",\\\"age\\\":29,\\\"city\\\":\\\"Maharashtra\\\",\\\"project\\\":\\\"LiquidBox\\\",\\\"manager name\\\":\\\"Mr.Umesh\\\"}]"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#5b21192d-857a-471a-9406-c34482bdd6c6">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="payload01"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#0ae5c26e-101a-4465-90dc-ebde6b79c71c">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="payload01"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

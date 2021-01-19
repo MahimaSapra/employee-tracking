@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd 
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
+<flow name="SynchronisationwithSalesforce" doc:id="f4e5e938-9a33-4e32-8f55-0bdb7ed78177" >
+		<http:listener doc:name="Listener" doc:id="034b8e72-5a80-4678-bfd1-41cc70c1f114" config-ref="employee_data-httpListenerConfig" path="/salesforce"/>
+		<db:select doc:name="Select" doc:id="ff8a4569-de19-4b41-bbfb-056b8c0d0fb9" config-ref="Database_Config">
+			<db:sql><![CDATA[Select * from emp_data;]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="JAVA to Employee_data" doc:id="d3b98421-4cc2-4a9e-96fe-64462453bb69">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	Name: payload01.Name,
+	id__c: payload01.ID,
+	email__c: payload01.Email,
+	project__c: payload01.Project,
+	city__c: payload01.City,
+	age__c : payload01.Age,
+	manager_name__c: payload01."Manager_name"
+	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<batch:job jobName="syncWithSalesforce" doc:id="587877f2-7244-4df7-9bd6-4c33d2cc08ea" >
+			<batch:process-records >
+				<batch:step name="isEmployee_idInSalesforce" doc:id="6b099351-4877-4f73-aacd-f1d09fd2d9ff" >
+					<salesforce:query doc:name="Employee_data" doc:id="b01bc508-c541-46e8-84f3-f707976b2327" config-ref="Salesforce_Config" target="exists" targetValue="#[(sizeOf(payload as Array) &gt; 0)]">
+						<salesforce:salesforce-query><![CDATA[SELECT id__c FROM Employee_data__c
+WHERE id__c= ':id']]></salesforce:salesforce-query>
+						<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	"id" : payload.id__c }]]]></salesforce:parameters>
+					</salesforce:query>
+					<logger level="INFO" doc:name="Logger" doc:id="0ac49059-7e62-47b2-b887-53359fcbd74f" />
+				</batch:step>
+				<batch:step name="writeToSalesforce" doc:id="7869a188-34f0-4c9e-b147-0a07757c849a" acceptExpression="#[not vars.exists]">
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="895a1636-d1b8-4888-ae7d-47c861aa1926" size="3">
+						<salesforce:create type="Employee_data__c" doc:name="Employee_data" doc:id="4d413821-fdd8-486e-abc5-6ee3460cfc44" config-ref="Salesforce_Config" />
+						<logger level="INFO" doc:name="Logger" doc:id="66328b3f-c388-469c-bd7f-8279afb3bc3c" />
+					</batch:aggregator>
+				</batch:step>
+				<batch:step name="UpsertToSalesforce" doc:id="e84b0c05-7902-4da5-b81d-dfd58b36ebcb" >
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="20fe0ba3-5fef-402b-ad0c-61697fa610b4" size="3">
+						<salesforce:upsert doc:name="Employee_data" doc:id="7136c7fd-74b8-4504-b95c-a01fa43a6c5c" config-ref="Salesforce_Config" objectType="Employee_data__c" externalIdFieldName="id__c"/>
+						<logger level="INFO" doc:name="Logger" doc:id="ceda1f1c-93d1-44ec-82ab-37fb3e1e998c" />
+					</batch:aggregator>
+				</batch:step>
+			
+</batch:process-records>
+			<batch:on-complete >
+				<logger level="INFO" doc:name="Logger" doc:id="e10b1d6d-e841-4e02-b9ae-f31b716a45b7" />
+			</batch:on-complete>
+		</batch:job>
+		<logger level="INFO" doc:name="payload" doc:id="f67ce8c5-972b-47a5-b0c0-89746a0284b1" message="#[payload]"/>
+	</flow>
+</mule>
+
+
+
+
+
+
+
+
+
+
+
+
+
+	

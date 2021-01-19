@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:validation="http://www.mulesoft.org/schema/mule/validation"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/validation http://www.mulesoft.org/schema/mule/validation/current/mule-validation.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="get-all" doc:id="ac161989-e8dd-422a-a8f2-9ec4b16da60b" >
+		<salesforce:query-all doc:name="Query all" doc:id="9565771e-e4df-4a60-882a-a6c5c48ac35b" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[select Name,id__C,email__C,age__C,city__C,project__C,manager_name__c from Employee_data__c]]></salesforce:salesforce-query>
+		</salesforce:query-all>
+		<ee:transform doc:name="Transform Message" doc:id="35ad3150-234c-4808-811e-8e97063ca446" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get-employee-id" doc:id="1f0f8058-7ebc-482b-995d-fa3a8ca1a58f" >
+		<salesforce:query doc:name="Query" doc:id="3fa10803-ce54-41c5-bd9e-97defe8f092b" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query ><![CDATA[select Name,id__c,email__c,age__c,city__c,project__c,manager_name__c from Employee_data__c where id__c = ':id']]></salesforce:salesforce-query>
+			<salesforce:parameters ><![CDATA[#[output application/java
+---
+{
+	id : attributes.uriParams.emp_id
+}]]]></salesforce:parameters>
+		</salesforce:query>
+		<ee:transform doc:name="Transform Message" doc:id="18159327-c65e-45db-9526-01615d625c17" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="create-employee" doc:id="bd6d417a-9fd7-44fa-a286-35a10431de74" >
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="f8acb8e2-0daa-4ee7-af58-d9f9084183cc" variableName="data"/>
+		<flow-ref doc:name="Flow Reference" doc:id="036d347c-51e5-4d95-9fc3-d74fcba005c0" name="authorization"/>
+		<choice doc:name="Choice" doc:id="517318ba-ef1d-469e-b855-8cd5e57bf8b4" >
+			<when expression='#[payload=="true"]'>
+				<set-payload value="#[vars.data]" doc:name="Set Payload" doc:id="e38d8b69-e284-43d1-aa59-00ad5066111e" />
+				<flow-ref doc:name="Flow Reference" doc:id="b8c29f7b-483b-4717-adf3-c522cfe61b17" name="mangercheck"/>
+				<ee:transform doc:name="Transform Message" doc:id="0ae5c26e-101a-4465-90dc-ebde6b79c71c">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	Name: payload01.name,
+	ID: payload01.id,
+	Email: payload01.email,
+	Project: payload01.project,
+	City: payload01.city,
+	Age : payload01.age,
+	Manager_name: payload01."manager name"
+	
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<ee:transform doc:name="Transform Message" doc:id="52e4fd69-8d21-4beb-9ca5-fe6d3fbd5055">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<db:bulk-insert doc:name="Bulk insert" doc:id="3d971cc7-7862-48a2-854b-3c120039896d" config-ref="Database_Config">
+					<db:bulk-input-parameters><![CDATA[#[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	name: payload01.Name,
+	id: payload01.ID,
+	email: payload01.Email,
+	project: payload01.Project,
+	city: payload01.City,
+	age : payload01.Age,
+	manager: payload01."Manager_name"
+	
+}]]]></db:bulk-input-parameters>
+					<db:sql><![CDATA[INSERT INTO emp_data(ID,Name,Email,Age,City,Project, Manager_name) values (:id,:name,:email,:age,:city,:project,:manager);]]></db:sql>
+				</db:bulk-insert>
+				<logger level="INFO" doc:name="Logger" doc:id="8196df89-909e-493f-8934-20fc542a4741" message="successful" />
+			</when>
+			<otherwise>
+				<set-payload value="Permission not granted" doc:name="Set Payload" doc:id="883e3b0f-9fd4-44dd-ac50-6c5f4934f2ae" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="Delete" doc:id="5bb93707-61c3-4c10-923e-8b5349ea5acd" >
+		<set-variable value="#[attributes.uriParams.emp_id]" doc:name="Set Variable" doc:id="f7714292-bf92-4775-94a2-534ee2348c72" variableName="id"/>
+		<flow-ref doc:name="Flow Reference" doc:id="1a855043-aace-4498-b009-acc871372b78" name="authorization"/>
+		<choice doc:name="Choice" doc:id="9e7f08ca-10fb-46a2-977a-6720da3e7bb8" >
+			<when expression='#[payload=="true"]'>
+				<salesforce:query doc:name="Query" doc:id="83b77b2d-7b88-4670-b712-6b454b60154d" config-ref="Salesforce_Config">
+			<salesforce:salesforce-query><![CDATA[select Id,Name,id__C,email__C,age__C,city__C,project__C,manager_name__c from Employee_data__c where id__c = ':id']]></salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output application/java
+---
+{
+	id : vars.id
+}]]]></salesforce:parameters>
+		</salesforce:query>
+				<ee:transform doc:name="Transform Message" doc:id="57c5c2c9-2f34-4312-9f5d-619891eb0067">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload map{
+	Id: $.Id
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<salesforce:delete doc:name="Delete" doc:id="29428be4-7749-4e69-8d7e-1dd7f9376764" config-ref="Salesforce_Config">
+			<salesforce:ids><![CDATA[#[payload.Id]]]></salesforce:ids>
+		</salesforce:delete>
+				<ee:transform doc:name="Transform Message" doc:id="6d6da791-17ce-41bb-81b3-ca936c3b1696">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<set-payload value="Permission not allowed" doc:name="Set Payload" doc:id="bd48f317-88d8-40bc-b29b-e6465d0c12a0" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="mangercheck" doc:id="05a16e2c-acc9-401d-bbe8-60c4af085c0f" >
+		<db:select doc:name="Select" doc:id="827c1374-7247-4e29-b710-44bacb90d16c" config-ref="Database_Config">
+			<db:sql ><![CDATA[Select ID from emp_data where Manager_name = :'manager']]></db:sql>
+			<db:input-parameters ><![CDATA[#[manager: payload."manger name"]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Choice" doc:id="4908543a-d290-49e2-b61e-37250fc7443c" >
+			<when expression="#[payload.ID == null]">
+				<set-payload value="false" doc:name="Set Payload" doc:id="39c4d7e9-ed02-4f94-bdc8-6356ad228a73" />
+			</when>
+			<otherwise >
+				<set-payload value="true" doc:name="Set Payload" doc:id="04b9edc2-e635-405c-b8fc-1135e1ad5c7f" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="authorization" doc:id="e366ecc7-4a1e-4972-bc4f-e2d1d33086b3" initialState="started">
+		<db:select doc:name="Select" doc:id="fbc77923-1e6f-48f9-ac0a-65ea3cb7533c" config-ref="Database_Config">
+			<db:sql><![CDATA[Select access_level from user where Username=:us and password=:pass]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	us: attributes.queryParams.username,
+	pass: attributes.queryParams.password
+	}]]]></db:input-parameters>
+		</db:select>
+		<choice doc:name="Choice" doc:id="7286e000-6915-45a3-93d1-7f5f5ebbc4cb" >
+			<when expression='#[payload.access_level[0]=="admin"]'>
+				<set-payload value="true" doc:name="Set Payload" doc:id="ab6f471c-f171-42b7-84db-cafcdc266fd7" />
+			</when>
+			<otherwise>
+				<set-payload value="false" doc:name="Set Payload" doc:id="74da3488-a13f-4be9-9cec-5a4c0bbbad7e" />
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Logger" doc:id="55c43e57-3c54-4aab-89d3-1966387f0753" message="#[payload]"/>
+	</flow>
+</mule>

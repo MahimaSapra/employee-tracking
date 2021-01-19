@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<error-handler name="common-error-hanlder" doc:id="cba6b081-e277-4b0d-88c3-19506f4b8d70" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="44668093-2456-41b1-b742-1b438b637a1b" type="APIKIT:BAD_REQUEST" >
+			<set-variable value="400" doc:name="Set http status" doc:id="87bf09df-4c27-4dea-b8ef-3366a4b96f14" variableName="httpstatus"/>
+			<set-variable value="bad request" doc:name="Set error message" doc:id="65c5ed58-49d0-42dd-9fbf-a694e11394c7" variableName="errorMessage"/>
+			<set-variable value="#[error.description]" doc:name="Set error description" doc:id="cabda06f-f5c3-43cd-b4d2-71a7bc8f2037" variableName="errorDescription"/>
+			<flow-ref doc:name="Flow Reference" doc:id="a5727678-c607-4ab7-95f4-78c991a66d36" name="email"/>
+		</on-error-propagate>
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="Copy_of_On Error Propagate" doc:id="c7af7e54-40f0-42a1-af56-f0dcee777971" type="APIKIT:NOT_FOUND" >
+			<set-variable value="400" doc:name="Copy_of_Set http status" doc:id="d8b45ee4-5f4d-4dd3-82c4-d3f618c8edcf" variableName="httpstatus" />
+			<set-variable value="not found" doc:name="Copy_of_Set error message" doc:id="26119b05-2939-447f-8c65-99b3d49e6a7f" variableName="errorMessage" />
+			<set-variable value="#[error.description]" doc:name="Copy_of_Set error description" doc:id="719d7937-5d94-400d-a7fa-2604007542ab" variableName="errorDescription" />
+			<flow-ref doc:name="Copy_of_Flow Reference" doc:id="49eb484e-8d5e-456d-bfbb-3966158e5034" name="email" />
+		</on-error-propagate>
+	</error-handler>
+	<flow name="email" doc:id="cdab6476-dccc-4832-95de-23c879c2d8ff" >
+		<ee:transform doc:name="Transform Message" doc:id="2a4864f5-ceb7-42cb-b8d5-1def37205e52" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	code : vars.httpstatus,
+	message : vars.errorMessage,
+	description : vars.errorDescription
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<email:send doc:name="Send email" doc:id="24925e0f-4126-4ae2-90a3-59fea343b55d" config-ref="Email_SMTP" fromaddress="umerbeyg17@gmail.com" subject="Error Occured in LnD Automation" fromAddress="${email.user}">
+			<email:to-addresses >
+				<email:to-address value="mahima.sapra@apisero.com" />
+			</email:to-addresses>
+			<email:body contentType="text/plain" >
+			</email:body>
+		</email:send>
+	</flow>
+</mule>
