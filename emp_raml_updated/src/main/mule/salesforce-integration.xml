@@ -45,7 +45,6 @@ payload]]></ee:set-payload>
 		<choice doc:name="Choice" doc:id="517318ba-ef1d-469e-b855-8cd5e57bf8b4" >
 			<when expression='#[payload=="true"]'>
 				<set-payload value="#[vars.data]" doc:name="Set Payload" doc:id="e38d8b69-e284-43d1-aa59-00ad5066111e" />
-				<flow-ref doc:name="Flow Reference" doc:id="b8c29f7b-483b-4717-adf3-c522cfe61b17" name="mangercheck"/>
 				<ee:transform doc:name="Transform Message" doc:id="0ae5c26e-101a-4465-90dc-ebde6b79c71c">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
@@ -88,6 +87,7 @@ payload map ( payload01 , indexOfPayload01 ) -> {
 					<db:sql><![CDATA[INSERT INTO emp_data(ID,Name,Email,Age,City,Project, Manager_name) values (:id,:name,:email,:age,:city,:project,:manager);]]></db:sql>
 				</db:bulk-insert>
 				<logger level="INFO" doc:name="Logger" doc:id="8196df89-909e-493f-8934-20fc542a4741" message="successful" />
+				<set-payload value="successful creation" doc:name="Set Payload" doc:id="35ea3b9f-4e80-4e67-873d-9f446cefa9db" />
 			</when>
 			<otherwise>
 				<set-payload value="Permission not granted" doc:name="Set Payload" doc:id="883e3b0f-9fd4-44dd-ac50-6c5f4934f2ae" />
@@ -128,23 +128,10 @@ output application/json
 payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+				<set-payload value="Successful deletion" doc:name="Set Payload" doc:id="0dec7de3-ac66-40d7-bc9a-17469cbf363f" />
 			</when>
 			<otherwise >
 				<set-payload value="Permission not allowed" doc:name="Set Payload" doc:id="bd48f317-88d8-40bc-b29b-e6465d0c12a0" />
-			</otherwise>
-		</choice>
-	</flow>
-	<flow name="mangercheck" doc:id="05a16e2c-acc9-401d-bbe8-60c4af085c0f" >
-		<db:select doc:name="Select" doc:id="827c1374-7247-4e29-b710-44bacb90d16c" config-ref="Database_Config">
-			<db:sql ><![CDATA[Select ID from emp_data where Manager_name = :'manager']]></db:sql>
-			<db:input-parameters ><![CDATA[#[manager: payload."manger name"]]]></db:input-parameters>
-		</db:select>
-		<choice doc:name="Choice" doc:id="4908543a-d290-49e2-b61e-37250fc7443c" >
-			<when expression="#[payload.ID == null]">
-				<set-payload value="false" doc:name="Set Payload" doc:id="39c4d7e9-ed02-4f94-bdc8-6356ad228a73" />
-			</when>
-			<otherwise >
-				<set-payload value="true" doc:name="Set Payload" doc:id="04b9edc2-e635-405c-b8fc-1135e1ad5c7f" />
 			</otherwise>
 		</choice>
 	</flow>

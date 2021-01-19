@@ -14,7 +14,11 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
 <flow name="SynchronisationwithSalesforce" doc:id="f4e5e938-9a33-4e32-8f55-0bdb7ed78177" >
-		<http:listener doc:name="Listener" doc:id="034b8e72-5a80-4678-bfd1-41cc70c1f114" config-ref="employee_data-httpListenerConfig" path="/salesforce"/>
+		<scheduler doc:name="Scheduler" doc:id="354253a2-bd31-4451-a71d-80aae8bd438f" >
+			<scheduling-strategy >
+				<fixed-frequency frequency="60"/>
+			</scheduling-strategy>
+		</scheduler>
 		<db:select doc:name="Select" doc:id="ff8a4569-de19-4b41-bbfb-056b8c0d0fb9" config-ref="Database_Config">
 			<db:sql><![CDATA[Select * from emp_data;]]></db:sql>
 		</db:select>

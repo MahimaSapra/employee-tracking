@@ -34,12 +34,11 @@ output application/json
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<email:send doc:name="Send email" doc:id="24925e0f-4126-4ae2-90a3-59fea343b55d" config-ref="Email_SMTP" fromaddress="umerbeyg17@gmail.com" subject="Error Occured in LnD Automation" fromAddress="${email.user}">
+		<email:send doc:name="Send" doc:id="6692b247-06e5-4cbf-a633-b4723a2b2a6e" config-ref="Email_SMTP" fromAddress="${email.user}">
 			<email:to-addresses >
 				<email:to-address value="mahima.sapra@apisero.com" />
 			</email:to-addresses>
-			<email:body contentType="text/plain" >
-			</email:body>
 		</email:send>
-	</flow>
+	
+</flow>
 </mule>

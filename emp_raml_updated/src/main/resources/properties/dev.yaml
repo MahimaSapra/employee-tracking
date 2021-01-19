@@ -15,7 +15,7 @@ file:
 email:
   host: "smtp.gmail.com"
   port: "587"
-  user: "![dqe5vmMEK/Ex4grCV/krKPQgTrYB+tGLW7QuXPlNdIg=]"
+  user: "mahimasapraonwork@gmail.com"
   passw: "![sru9szix1IhWeDunKdSwNQ==]"
   connection:
     starttls: "mail.smtp.starttls.enable"
